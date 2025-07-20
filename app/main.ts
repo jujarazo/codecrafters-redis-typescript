@@ -1,15 +1,9 @@
 import * as net from "net";
+import {COMMANDS, RESP, SET_COMMANDS, type storedValue} from "./types.ts";
 
 console.log("Logs from your program will appear here!");
 
-enum COMMANDS {
-  PING = 'PING',
-  ECHO = 'ECHO',
-  GET = 'GET',
-  SET = 'SET'
-}
-
-const store = new Map<string, string>();
+const store = new Map<string, storedValue>();
 
 function parseRESP(buffer: Buffer ): string[] {
   const bufferParsed = buffer.toString();
@@ -32,8 +26,25 @@ function parseRESP(buffer: Buffer ): string[] {
     }
   }
 
-
   return res;
+}
+
+function parseSetOptions(args: string[]): { expiresAt?: number } {
+  let expiresAt: number | undefined = undefined;
+
+  for (let i = 0; i < args.length - 1; i++) {
+    const option = args[i].toUpperCase();
+
+    if (option === SET_COMMANDS.PX) {
+      const ttl = parseInt(args[i + 1], 10);
+      if (!isNaN(ttl)) {
+        expiresAt = Date.now() + ttl;
+      }
+      i++;
+    }
+  }
+
+  return { expiresAt };
 }
 
 const server: net.Server = net.createServer((connection: net.Socket) => {
@@ -47,7 +58,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
       switch (command) {
         case COMMANDS.PING:
-          connection.write("+PONG\r\n");
+          connection.write(RESP.PONG);
           break;
 
         case COMMANDS.ECHO: {
@@ -59,28 +70,40 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
         case COMMANDS.SET: {
           const key = commandParts[1];
           const value = commandParts[2];
-          store.set(key, value);
-          connection.write("+OK\r\n");
+
+          const {expiresAt} = parseSetOptions(commandParts.slice(3))
+
+          store.set(key, {value, expiresAt});
+          connection.write(RESP.OK);
           break;
         }
 
         case COMMANDS.GET: {
           const key = commandParts[1];
-          const value = store.get(key);
-          if (value === undefined) {
-            connection.write("$-1\r\n");
+          const storedValue = store.get(key);
+
+          if(!storedValue) {
+            connection.write(RESP.NULL_BULK_STRING);
+            break;
+          }
+
+          const { value, expiresAt } = storedValue;
+
+          if (expiresAt && Date.now() >= expiresAt) {
+            store.delete(key);
+            connection.write(RESP.NULL_BULK_STRING);
           } else {
             connection.write(`$${value.length}\r\n${value}\r\n`);
           }
           break;
         }
         default: {
-          connection.write("-ERR unknown command\r\n");
+          connection.write(RESP.ERROR_UNKNOWN_COMMAND);
         }
       }
     } catch (e) {
       console.error("Parsing error:", e);
-      connection.write("-ERR parsing failed\r\n");
+      connection.write(RESP.ERROR_PARSE);
     }
   });
 
