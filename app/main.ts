@@ -7,7 +7,7 @@ function parseRESP(buffer: Buffer ): string[] {
   const bufferParsed = buffer.toString();
   const lines = bufferParsed.split("\r\n");
 
-  if (lines.length && lines[0].startsWith("*")) {
+  if (!lines.length && !lines[0].startsWith("*")) {
     throw new Error("Expecting lines without starting line, or RESP array");
   }
 
