@@ -4,6 +4,7 @@ export enum COMMANDS {
   GET = 'GET',
   SET = 'SET',
   RPUSH = 'RPUSH',
+  LPUSH = 'LPUSH',
   LRANGE = 'LRANGE',
 }
 
