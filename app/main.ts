@@ -56,6 +56,11 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
           break;
         }
 
+        case COMMANDS.LPOP: {
+          connection.write(handleLPush(commandParts));
+          break;
+        }
+
         default: {
           connection.write(RESP.ERROR_UNKNOWN_COMMAND);
         }

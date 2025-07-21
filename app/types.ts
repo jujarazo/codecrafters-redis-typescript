@@ -7,6 +7,7 @@ export enum COMMANDS {
   LPUSH = 'LPUSH',
   LRANGE = 'LRANGE',
   LLEN= 'LLEN',
+  LPOP = 'LPOP',
 }
 
 export enum SET_COMMANDS {
