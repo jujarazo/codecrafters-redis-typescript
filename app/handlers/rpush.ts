@@ -6,6 +6,12 @@ import { tryServeBlockedClient } from "../store.ts";
 export const handleRpush = (parts: string[]): string => {
   const key = parts[1];
   const valuesToPush = parts.slice(2);
+
+  const wasServed = tryServeBlockedClient(key, valuesToPush[0]);
+  if (wasServed) {
+    valuesToPush.shift();
+  }
+
   const existingValue = redisStore.get(key);
 
   if (!existingValue) {
@@ -17,14 +23,11 @@ export const handleRpush = (parts: string[]): string => {
     return formatIntegerToRESP(valuesToPush.length);
   }
 
-  if (existingValue?.type === 'list') {
-    if (tryServeBlockedClient(key, valuesToPush[0])) {
-      valuesToPush.shift();
-    }
-
+  if (existingValue.type === 'list') {
     existingValue.value.push(...valuesToPush);
     return formatIntegerToRESP(existingValue.value.length);
   }
 
   return RESP.WRONG_TYPE;
 };
+
