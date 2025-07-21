@@ -110,7 +110,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
               value: [...valuesToPush]
             });
 
-            connection.write(formatIntegerToRESP(1));
+            connection.write(formatIntegerToRESP(valuesToPush.length));
           } else if (existingValue?.type === 'list') {
             existingValue.value.push(...valuesToPush);
             connection.write(formatIntegerToRESP(existingValue.value.length));
