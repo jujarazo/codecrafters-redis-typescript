@@ -3,6 +3,7 @@ import {COMMANDS, RESP} from "./types.ts";
 import {parseRESP} from "./parser";
 import {handleEcho, handleGet, handleLRange, handleRpush, handleSet} from "./handlers";
 import {handleLPush} from "./handlers/lpush.ts";
+import {handleLLen} from "./handlers/llen.ts";
 
 console.log("Logs from your program will appear here!");
 
@@ -47,6 +48,11 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
         case COMMANDS.LRANGE: {
           connection.write(handleLRange(commandParts));
+          break;
+        }
+
+        case COMMANDS.LLEN: {
+          connection.write(handleLLen(commandParts));
           break;
         }
 

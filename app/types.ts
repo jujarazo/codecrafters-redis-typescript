@@ -6,6 +6,7 @@ export enum COMMANDS {
   RPUSH = 'RPUSH',
   LPUSH = 'LPUSH',
   LRANGE = 'LRANGE',
+  LLEN= 'LLEN',
 }
 
 export enum SET_COMMANDS {
@@ -18,7 +19,8 @@ export enum RESP {
   PONG = "+PONG\r\n",
   ERROR_UNKNOWN_COMMAND = "-ERR unknown command\r\n",
   ERROR_PARSE = "-ERR parsing failed\r\n",
-  WRONG_TYPE = "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+  WRONG_TYPE = "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n",
+  EMPTY_ARRAY = ":0\r\n"
 }
 
 interface StringValue {

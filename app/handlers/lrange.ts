@@ -21,7 +21,7 @@ export function handleLRange(parts: string[]) {
   endIndex = Math.min(endIndex, listLength - 1);
 
   if (startIndex >= listLength || startIndex > endIndex || entry?.type !== 'list') {
-    return "*0\r\n";
+    return RESP.EMPTY_ARRAY;
   }
 
   const end = Math.min(endIndex, listLength - 1);
