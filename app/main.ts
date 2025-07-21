@@ -101,18 +101,18 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
         case COMMANDS.RPUSH: {
           const key = commandParts[1];
-          const value = commandParts[2];
+          const valuesToPush = commandParts.slice(2);
           const existingValue = store.get(key);
 
           if (!existingValue) {
             store.set(key, {
               type: "list",
-              value: [value]
+              value: [...valuesToPush]
             });
 
             connection.write(formatIntegerToRESP(1));
           } else if (existingValue?.type === 'list') {
-            existingValue.value.push(...value);
+            existingValue.value.push(...valuesToPush);
             connection.write(formatIntegerToRESP(existingValue.value.length));
           } else {
             connection.write(RESP.WRONG_TYPE);
