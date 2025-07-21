@@ -4,6 +4,7 @@ export enum COMMANDS {
   GET = 'GET',
   SET = 'SET',
   RPUSH = 'RPUSH',
+  LRANGE = 'LRANGE',
 }
 
 export enum SET_COMMANDS {

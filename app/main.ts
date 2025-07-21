@@ -1,6 +1,6 @@
 import * as net from "net";
 import {COMMANDS, RESP, SET_COMMANDS, type storedValue} from "./types.ts";
-import {formatIntegerToRESP} from "./helpers.ts";
+import {formatArrayToRESP, formatIntegerToRESP} from "./helpers.ts";
 
 console.log("Logs from your program will appear here!");
 
@@ -117,6 +117,31 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
           } else {
             connection.write(RESP.WRONG_TYPE);
           }
+
+          break;
+        }
+
+        case COMMANDS.LRANGE: {
+          const key = commandParts[1];
+          const startIndex = parseInt(commandParts[2], 10);
+          const endIndex = parseInt(commandParts[3],10);
+
+          if (isNaN(startIndex) || isNaN(endIndex) || startIndex < 0 || endIndex < 0) {
+            connection.write(RESP.ERROR_PARSE);
+            break;
+          }
+
+          const entry = store.get(key);
+          const listLength = entry?.value.length || 0;
+
+          if (startIndex >= listLength || startIndex > endIndex || entry?.type !== 'list') {
+            connection.write("*0\r\n");
+            break;
+          }
+          const end = Math.min(endIndex, listLength - 1);
+          const result = entry?.value.slice(startIndex, end + 1);
+
+          connection.write(formatArrayToRESP(result));
 
           break;
         }
