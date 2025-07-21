@@ -7,17 +7,19 @@ export const handleLPush = (parts: string[]): string => {
   const valuesToPush = parts.slice(2);
   const existingValue = redisStore.get(key);
 
+  const reversed = [...valuesToPush].reverse();
+
   if (!existingValue) {
     redisStore.set(key, {
       type: "list",
-      value: [...valuesToPush.reverse()]
+      value: reversed,
     });
 
-    return formatIntegerToRESP(valuesToPush.length);
+    return formatIntegerToRESP(reversed.length);
   }
 
   if (existingValue?.type === 'list') {
-    existingValue.value.push(...valuesToPush.reverse());
+    existingValue.value.unshift(...reversed);
     return formatIntegerToRESP(existingValue.value.length);
   }
 
