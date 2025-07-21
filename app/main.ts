@@ -1,5 +1,6 @@
 import * as net from "net";
 import {COMMANDS, RESP, SET_COMMANDS, type storedValue} from "./types.ts";
+import {formatIntegerToRESP} from "./helpers.ts";
 
 console.log("Logs from your program will appear here!");
 
@@ -101,14 +102,18 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
         case COMMANDS.RPUSH: {
           const key = commandParts[1];
           const value = commandParts[2];
+          const existingValue = store.get(key);
 
-          if (!store.has(key)) {
+          if (!existingValue) {
             store.set(key, {
               type: "list",
               value: [value]
             });
 
-            connection.write(`:${1}\r\n`);
+            connection.write(formatIntegerToRESP(1));
+          } else if (existingValue?.type === 'list') {
+            existingValue.value.push(value);
+            connection.write(formatIntegerToRESP(existingValue.value.length));
           } else {
             // For this stage, we don't handle appending yet
             connection.write(RESP.ERROR_UNKNOWN_COMMAND);
