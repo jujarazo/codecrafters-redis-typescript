@@ -1,9 +1,16 @@
 import * as net from "net";
 import {COMMANDS, RESP} from "./types.ts";
 import {parseRESP} from "./parser";
-import {handleEcho, handleGet, handleLRange, handleRpush, handleSet} from "./handlers";
-import {handleLPush} from "./handlers/lpush.ts";
-import {handleLLen} from "./handlers/llen.ts";
+import {
+  handleEcho,
+  handleGet,
+  handleLLen,
+  handleLPop,
+  handleLPush,
+  handleLRange,
+  handleRpush,
+  handleSet
+} from "./handlers";
 
 console.log("Logs from your program will appear here!");
 
@@ -57,7 +64,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
         }
 
         case COMMANDS.LPOP: {
-          connection.write(handleLPush(commandParts));
+          connection.write(handleLPop(commandParts));
           break;
         }
 
