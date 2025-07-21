@@ -2,6 +2,7 @@ import * as net from "net";
 import {COMMANDS, RESP} from "./types.ts";
 import {parseRESP} from "./parser";
 import {
+  handleBLPop,
   handleEcho,
   handleGet,
   handleLLen,
@@ -65,6 +66,12 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
         case COMMANDS.LPOP: {
           connection.write(handleLPop(commandParts));
+          break;
+        }
+
+        case COMMANDS.BLPOP: {
+          const res = handleBLPop(commandParts, connection);
+          if (res !== null) connection.write(res);
           break;
         }
 

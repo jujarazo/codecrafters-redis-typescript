@@ -6,3 +6,4 @@ export * from './lrange';
 export * from './lpop';
 export * from './llen';
 export * from './lpush';
+export * from './blpop';

@@ -8,6 +8,7 @@ export enum COMMANDS {
   LRANGE = 'LRANGE',
   LLEN= 'LLEN',
   LPOP = 'LPOP',
+  BLPOP = 'BLPOP',
 }
 
 export enum SET_COMMANDS {
