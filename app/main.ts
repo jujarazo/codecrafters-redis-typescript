@@ -112,11 +112,10 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
             connection.write(formatIntegerToRESP(1));
           } else if (existingValue?.type === 'list') {
-            existingValue.value.push(value);
+            existingValue.value.push(...value);
             connection.write(formatIntegerToRESP(existingValue.value.length));
           } else {
-            // For this stage, we don't handle appending yet
-            connection.write(RESP.ERROR_UNKNOWN_COMMAND);
+            connection.write(RESP.WRONG_TYPE);
           }
 
           break;
