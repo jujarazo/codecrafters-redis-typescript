@@ -17,21 +17,69 @@ export function del(key: string) {
 
 type BlockedClient = {
   connection: net.Socket;
+  timeoutId?: Timer;
   key: string;
 };
 
-const blockedClients: BlockedClient[] = [];
+const blockedClients = new Map<string, BlockedClient[]>();
+
 
 export function addBlockedClient(client: BlockedClient) {
-  blockedClients.push(client);
+  const { key } = client;
+
+  if (!blockedClients.has(key)) {
+    blockedClients.set(key, []);
+  }
+
+  blockedClients.get(key)!.push(client);
 }
+
 
 export function tryServeBlockedClient(key: string, value: string): boolean {
-  const index = blockedClients.findIndex(c => c.key === key);
-  if (index === -1) return false;
+  const clients = blockedClients.get(key);
+  if (!clients || clients.length === 0) {
+    return false;
+  }
 
-  const client = blockedClients.splice(index, 1)[0];
+  const client = clients.shift(); // oldest blocked client
+
+  if (clients.length === 0) {
+    blockedClients.delete(key);
+  }
+
+  if (!client) return false;
+
+  if (client.timeoutId) {
+    clearTimeout(client.timeoutId);
+  }
+
   const response = `*2\r\n$${key.length}\r\n${key}\r\n$${value.length}\r\n${value}\r\n`;
   client.connection.write(response);
+
   return true;
 }
+
+export function clearBlockedClientsForKey(key: string) {
+  const clients = blockedClients.get(key);
+  if (!clients) return;
+
+  for (const client of clients) {
+    if (client.timeoutId) clearTimeout(client.timeoutId);
+  }
+
+  blockedClients.delete(key);
+}
+
+export function removeBlockedClient(connection: net.Socket, key: string) {
+  const queue = blockedClients.get(key);
+  if (!queue) return;
+
+  const updated = queue.filter(c => c.connection !== connection);
+  if (updated.length === 0) {
+    blockedClients.delete(key);
+  } else {
+    blockedClients.set(key, updated);
+  }
+}
+
+
