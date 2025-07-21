@@ -73,7 +73,7 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
           const {expiresAt} = parseSetOptions(commandParts.slice(3))
 
-          store.set(key, {value, expiresAt});
+          store.set(key, {type: 'string', value, expiresAt});
           connection.write(RESP.OK);
           break;
         }
@@ -97,6 +97,26 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
           }
           break;
         }
+
+        case COMMANDS.RPUSH: {
+          const key = commandParts[1];
+          const value = commandParts[2];
+
+          if (!store.has(key)) {
+            store.set(key, {
+              type: "list",
+              value: [value]
+            });
+
+            connection.write(`:${1}\r\n`);
+          } else {
+            // For this stage, we don't handle appending yet
+            connection.write(RESP.ERROR_UNKNOWN_COMMAND);
+          }
+
+          break;
+        }
+
         default: {
           connection.write(RESP.ERROR_UNKNOWN_COMMAND);
         }

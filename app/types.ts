@@ -2,7 +2,8 @@ export enum COMMANDS {
   PING = 'PING',
   ECHO = 'ECHO',
   GET = 'GET',
-  SET = 'SET'
+  SET = 'SET',
+  RPUSH = 'RPUSH',
 }
 
 export enum SET_COMMANDS {
@@ -17,7 +18,16 @@ export enum RESP {
   ERROR_PARSE = "-ERR parsing failed\r\n"
 }
 
-export interface storedValue {
+interface StringValue {
+  type: "string";
   value: string;
   expiresAt?: number;
 }
+
+interface ListValue {
+  type: "list";
+  value: string[];
+  expiresAt?: number;
+}
+
+export type storedValue = StringValue | ListValue;
