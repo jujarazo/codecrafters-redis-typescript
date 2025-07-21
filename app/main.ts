@@ -123,21 +123,28 @@ const server: net.Server = net.createServer((connection: net.Socket) => {
 
         case COMMANDS.LRANGE: {
           const key = commandParts[1];
-          const startIndex = parseInt(commandParts[2], 10);
-          const endIndex = parseInt(commandParts[3],10);
+          let startIndex = parseInt(commandParts[2], 10);
+          let endIndex = parseInt(commandParts[3],10);
 
-          if (isNaN(startIndex) || isNaN(endIndex) || startIndex < 0 || endIndex < 0) {
+          if (isNaN(startIndex) || isNaN(endIndex)) {
             connection.write(RESP.ERROR_PARSE);
             break;
           }
 
           const entry = store.get(key);
           const listLength = entry?.value.length || 0;
+          if (startIndex < 0) startIndex = listLength + startIndex;
+          if (endIndex < 0) endIndex = listLength + endIndex;
+
+          // Clamp the indexes in case it is still negative
+          startIndex = Math.max(0, startIndex);
+          endIndex = Math.min(endIndex, listLength - 1);
 
           if (startIndex >= listLength || startIndex > endIndex || entry?.type !== 'list') {
             connection.write("*0\r\n");
             break;
           }
+
           const end = Math.min(endIndex, listLength - 1);
           const result = entry?.value.slice(startIndex, end + 1);
 
