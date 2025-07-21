@@ -2,7 +2,7 @@ import * as redisStore from "../store";
 import {RESP} from "../types.ts";
 
 export function handleLLen(parts: string[]) {
-  const key = parts[0];
+  const key = parts[1];
   const entry = redisStore.get(key);
 
   if (!entry || entry.type !== 'list') {
