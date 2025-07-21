@@ -36,18 +36,13 @@ export function addBlockedClient(client: BlockedClient) {
 
 
 export function tryServeBlockedClient(key: string, value: string): boolean {
-  const clients = blockedClients.get(key);
-  if (!clients || clients.length === 0) {
-    return false;
-  }
+  const queue = blockedClients.get(key);
+  if (!queue || queue.length === 0) return false;
 
-  const client = clients.shift(); // oldest blocked client
-
-  if (clients.length === 0) {
+  const client = queue.shift()!;
+  if (queue.length === 0) {
     blockedClients.delete(key);
   }
-
-  if (!client) return false;
 
   if (client.timeoutId) {
     clearTimeout(client.timeoutId);
@@ -58,6 +53,7 @@ export function tryServeBlockedClient(key: string, value: string): boolean {
 
   return true;
 }
+
 
 export function clearBlockedClientsForKey(key: string) {
   const clients = blockedClients.get(key);
