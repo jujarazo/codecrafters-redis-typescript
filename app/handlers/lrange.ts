@@ -12,6 +12,11 @@ export function handleLRange(parts: string[]) {
   }
 
   const entry = redisStore.get(key);
+
+  if (entry?.type !== 'list') {
+    return RESP.EMPTY_ARRAY;
+  }
+
   const listLength = entry?.value.length || 0;
   if (startIndex < 0) startIndex = listLength + startIndex;
   if (endIndex < 0) endIndex = listLength + endIndex;
@@ -20,7 +25,7 @@ export function handleLRange(parts: string[]) {
   startIndex = Math.max(0, startIndex);
   endIndex = Math.min(endIndex, listLength - 1);
 
-  if (startIndex >= listLength || startIndex > endIndex || entry?.type !== 'list') {
+  if (startIndex >= listLength || startIndex > endIndex) {
     return RESP.EMPTY_ARRAY;
   }
 
