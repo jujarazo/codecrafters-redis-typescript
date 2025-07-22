@@ -10,6 +10,7 @@ export enum COMMANDS {
   LPOP = 'LPOP',
   BLPOP = 'BLPOP',
   TYPE = 'TYPE',
+  XADD = 'XADD',
 }
 
 export enum SET_COMMANDS {
@@ -39,4 +40,9 @@ interface ListValue {
   expiresAt?: number;
 }
 
-export type storedValue = StringValue | ListValue;
+interface StreamValue {
+  type: "stream";
+  value: Array<{id: string, fields: Record<string, string>}>;
+}
+
+export type storedValue = StringValue | ListValue | StreamValue;

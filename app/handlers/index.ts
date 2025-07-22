@@ -8,3 +8,4 @@ export * from './llen';
 export * from './lpush';
 export * from './blpop';
 export * from './type';
+export * from './xadd';

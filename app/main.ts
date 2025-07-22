@@ -10,7 +10,7 @@ import {
   handleLPush,
   handleLRange,
   handleRpush,
-  handleSet, handleType
+  handleSet, handleType, handleXAdd
 } from "./handlers";
 
 console.log("Logs from your program will appear here!");
@@ -26,7 +26,8 @@ const handlers: Record<string, (parts: string[], conn: net.Socket) => string | n
   [COMMANDS.LLEN]: (parts) => handleLLen(parts),
   [COMMANDS.LPOP]: (parts) => handleLPop(parts),
   [COMMANDS.BLPOP]: (parts, conn) => handleBLPop(parts, conn),
-  [COMMANDS.TYPE]: (parts) => handleType(parts)
+  [COMMANDS.TYPE]: (parts) => handleType(parts),
+  [COMMANDS.XADD]: (parts: string[]) => handleXAdd(parts)
 };
 
 const server: net.Server = net.createServer((connection: net.Socket) => {
