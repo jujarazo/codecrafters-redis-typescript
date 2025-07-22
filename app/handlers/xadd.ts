@@ -1,19 +1,18 @@
 import { RESP } from "../types.ts";
 import * as redisStore from "../store.ts";
-import {isIdGreater, parseEntryId} from "../helpers.ts";
+import {formatId, isIdGreater, parseEntryId} from "../helpers.ts";
+
 
 export function handleXAdd(parts: string[]): string {
   const key = parts[1];
-  const id = parts[2];
+  const rawId = parts[2];
+  let entryId = rawId;
 
-  if (!/^\d+-\d+$/.test(id)) {
+  if (!/^\d+-\*?$/.test(rawId) && !/^\d+-\d+$/.test(rawId)) {
     return RESP.ERROR_PARSE;
   }
 
-  const [ms, seq] = parseEntryId(id);
-  if (ms === 0 && seq === 0) {
-    return RESP.ID_IS_CERO;
-  }
+  const [msPart, seqPart] = parseEntryId(rawId);
 
   const fields: Record<string, string> = {};
   for (let i = 3; i < parts.length; i += 2) {
@@ -23,24 +22,39 @@ export function handleXAdd(parts: string[]): string {
     fields[field] = value;
   }
 
-  const existing = redisStore.get(key);
+  let stream = redisStore.get(key);
 
-  if (!existing) {
-    redisStore.set(key, {
-      type: "stream",
-      value: [{ id, fields }],
-    });
-  } else if (existing.type === "stream") {
-    const lastEntry = existing.value[existing.value.length - 1];
-
-    if (!isIdGreater(id, lastEntry.id)) {
-      return RESP.ID_IS_EQUAL_SMALLER;
-    }
-
-    existing.value.push({ id, fields });
-  } else {
-    return RESP.WRONG_TYPE;
+  if (!stream) {
+    stream = { type: "stream", value: [] };
+    redisStore.set(key, stream);
   }
 
-  return `$${id.length}\r\n${id}\r\n`;
+  if (stream.type !== "stream") return RESP.WRONG_TYPE;
+
+  if (seqPart === "*") {
+    let nextSeq = 0;
+    const sameTimeEntries = stream.value.filter((e) => e.id.startsWith(`${msPart}-`));
+    if (sameTimeEntries.length > 0) {
+      const lastSeq = Math.max(...sameTimeEntries.map((e) => parseInt(e.id.split("-")[1])));
+      nextSeq = lastSeq + 1;
+    } else if (msPart === 0) {
+      nextSeq = 1;
+    }
+    entryId = formatId(msPart, nextSeq);
+  }
+
+  const [msFinal, seqFinal] = parseEntryId(entryId);
+
+  if (msFinal === 0 && seqFinal === 0) {
+    return RESP.ID_IS_CERO;
+  }
+
+  const last = stream.value.at(-1);
+  if (last && !isIdGreater(entryId, last.id)) {
+    return RESP.ID_IS_EQUAL_SMALLER;
+  }
+
+  stream.value.push({ id: entryId, fields });
+
+  return `$${entryId.length}\r\n${entryId}\r\n`;
 }
