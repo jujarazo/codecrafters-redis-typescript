@@ -1,13 +1,18 @@
 import { RESP } from "../types.ts";
 import * as redisStore from "../store.ts";
+import {isIdGreater, parseEntryId} from "../helpers.ts";
 
 export function handleXAdd(parts: string[]): string {
   const key = parts[1];
   const id = parts[2];
 
-  // Validate id
   if (!/^\d+-\d+$/.test(id)) {
     return RESP.ERROR_PARSE;
+  }
+
+  const [ms, seq] = parseEntryId(id);
+  if (ms === 0 && seq === 0) {
+    return RESP.ID_IS_CERO;
   }
 
   const fields: Record<string, string> = {};
@@ -26,6 +31,12 @@ export function handleXAdd(parts: string[]): string {
       value: [{ id, fields }],
     });
   } else if (existing.type === "stream") {
+    const lastEntry = existing.value[existing.value.length - 1];
+
+    if (!isIdGreater(id, lastEntry.id)) {
+      return RESP.ID_IS_EQUAL_SMALLER;
+    }
+
     existing.value.push({ id, fields });
   } else {
     return RESP.WRONG_TYPE;

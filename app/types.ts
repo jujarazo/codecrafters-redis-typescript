@@ -26,6 +26,8 @@ export enum RESP {
   WRONG_TYPE = "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n",
   EMPTY_ARRAY = "*0\r\n",
   NONE = "+none\r\n",
+  ID_IS_CERO = "-ERR The ID specified in XADD must be greater than 0-0\r\n",
+  ID_IS_EQUAL_SMALLER = "-ERR The ID specified in XADD is equal or smaller than the target stream top item\r\n",
 }
 
 interface StringValue {

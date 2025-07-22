@@ -13,3 +13,17 @@ export function formatArrayToRESP(items: string[]): string {
   }
   return resp;
 }
+
+export function parseEntryId(id: string): [number, number] {
+  const [ms, seq] = id.split("-").map(Number);
+  return [ms, seq];
+}
+
+export function isIdGreater(newId: string, lastId: string): boolean {
+  const [newMs, newSeq] = parseEntryId(newId);
+  const [lastMs, lastSeq] = parseEntryId(lastId);
+
+  if (newMs > lastMs) return true;
+  if (newMs === lastMs) return newSeq > lastSeq;
+  return false;
+}
