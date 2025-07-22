@@ -9,6 +9,7 @@ export enum COMMANDS {
   LLEN= 'LLEN',
   LPOP = 'LPOP',
   BLPOP = 'BLPOP',
+  TYPE = 'TYPE',
 }
 
 export enum SET_COMMANDS {
@@ -22,7 +23,8 @@ export enum RESP {
   ERROR_UNKNOWN_COMMAND = "-ERR unknown command\r\n",
   ERROR_PARSE = "-ERR parsing failed\r\n",
   WRONG_TYPE = "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n",
-  EMPTY_ARRAY = "*0\r\n"
+  EMPTY_ARRAY = "*0\r\n",
+  NONE = "+none\r\n",
 }
 
 interface StringValue {

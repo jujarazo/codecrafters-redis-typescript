@@ -7,3 +7,4 @@ export * from './lpop';
 export * from './llen';
 export * from './lpush';
 export * from './blpop';
+export * from './type';

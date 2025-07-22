@@ -1,5 +1,5 @@
 import * as net from "net";
-import {COMMANDS, RESP} from "./types.ts";
+import { COMMANDS, RESP } from "./types.ts";
 import {parseRESP} from "./parser";
 import {
   handleBLPop,
@@ -10,74 +10,39 @@ import {
   handleLPush,
   handleLRange,
   handleRpush,
-  handleSet
+  handleSet, handleType
 } from "./handlers";
 
 console.log("Logs from your program will appear here!");
 
+const handlers: Record<string, (parts: string[], conn: net.Socket) => string | null> = {
+  [COMMANDS.PING]: () => RESP.PONG,
+  [COMMANDS.ECHO]: (parts) => handleEcho(parts),
+  [COMMANDS.SET]: (parts) => { handleSet(parts); return RESP.OK; },
+  [COMMANDS.GET]: (parts) => handleGet(parts),
+  [COMMANDS.RPUSH]: (parts) => handleRpush(parts),
+  [COMMANDS.LPUSH]: (parts) => handleLPush(parts),
+  [COMMANDS.LRANGE]: (parts) => handleLRange(parts),
+  [COMMANDS.LLEN]: (parts) => handleLLen(parts),
+  [COMMANDS.LPOP]: (parts) => handleLPop(parts),
+  [COMMANDS.BLPOP]: (parts, conn) => handleBLPop(parts, conn),
+  [COMMANDS.TYPE]: (parts) => handleType(parts)
+};
+
 const server: net.Server = net.createServer((connection: net.Socket) => {
   connection.on("data", (chunk) => {
-    console.log("Received data: ", chunk.toLocaleString());
+    console.log("Received data: ", chunk.toString());
 
     try {
       const commandParts = parseRESP(chunk);
       const command = commandParts[0].toUpperCase();
 
-      switch (command) {
-        case COMMANDS.PING:
-          connection.write(RESP.PONG);
-          break;
-
-        case COMMANDS.ECHO: {
-          connection.write(handleEcho(commandParts));
-          break;
-        }
-
-        case COMMANDS.SET: {
-          handleSet(commandParts);
-          connection.write(RESP.OK);
-          break;
-        }
-
-        case COMMANDS.GET: {
-          connection.write(handleGet(commandParts));
-          break;
-        }
-
-        case COMMANDS.RPUSH: {
-          connection.write(handleRpush(commandParts))
-          break;
-        }
-
-        case COMMANDS.LPUSH: {
-          connection.write(handleLPush(commandParts));
-          break;
-        }
-
-        case COMMANDS.LRANGE: {
-          connection.write(handleLRange(commandParts));
-          break;
-        }
-
-        case COMMANDS.LLEN: {
-          connection.write(handleLLen(commandParts));
-          break;
-        }
-
-        case COMMANDS.LPOP: {
-          connection.write(handleLPop(commandParts));
-          break;
-        }
-
-        case COMMANDS.BLPOP: {
-          const res = handleBLPop(commandParts, connection);
-          if (res !== null) connection.write(res);
-          break;
-        }
-
-        default: {
-          connection.write(RESP.ERROR_UNKNOWN_COMMAND);
-        }
+      const handler = handlers[command];
+      if (handler) {
+        const res = handler(commandParts, connection);
+        if (typeof res === "string") connection.write(res);
+      } else {
+        connection.write(RESP.ERROR_UNKNOWN_COMMAND);
       }
     } catch (e) {
       console.error("Parsing error:", e);
