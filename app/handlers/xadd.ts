@@ -8,12 +8,6 @@ export function handleXAdd(parts: string[]): string {
   const rawId = parts[2];
   let entryId = rawId;
 
-  if (!/^\d+-\*?$/.test(rawId) && !/^\d+-\d+$/.test(rawId)) {
-    return RESP.ERROR_PARSE;
-  }
-
-  const [msPart, seqPart] = parseEntryId(rawId);
-
   const fields: Record<string, string> = {};
   for (let i = 3; i < parts.length; i += 2) {
     const field = parts[i];
@@ -31,7 +25,15 @@ export function handleXAdd(parts: string[]): string {
 
   if (stream.type !== "stream") return RESP.WRONG_TYPE;
 
-  if (seqPart === "*") {
+  // Fully auto-generated ID: "*"
+  if (rawId === "*") {
+    const now = Date.now();
+    entryId = `${now}-0`;
+  }
+
+  // Semi-auto: <ms>-*
+  else if (/^\d+-\*$/.test(rawId)) {
+    const [msPart] = rawId.split("-").map(Number);
     let nextSeq = 0;
     const sameTimeEntries = stream.value.filter((e) => e.id.startsWith(`${msPart}-`));
     if (sameTimeEntries.length > 0) {
@@ -40,13 +42,18 @@ export function handleXAdd(parts: string[]): string {
     } else if (msPart === 0) {
       nextSeq = 1;
     }
-    entryId = formatId(msPart, nextSeq);
+    entryId = `${msPart}-${nextSeq}`;
   }
 
-  const [msFinal, seqFinal] = parseEntryId(entryId);
-
-  if (msFinal === 0 && seqFinal === 0) {
-    return RESP.ID_IS_CERO;
+  // Manual ID
+  else if (!/^\d+-\d+$/.test(rawId)) {
+    return RESP.ERROR_PARSE;
+  } else {
+    const [ms, seq] = parseEntryId(rawId);
+    if (ms === 0 && seq === 0) {
+      return RESP.ID_IS_CERO;
+    }
+    entryId = rawId;
   }
 
   const last = stream.value.at(-1);
@@ -58,3 +65,4 @@ export function handleXAdd(parts: string[]): string {
 
   return `$${entryId.length}\r\n${entryId}\r\n`;
 }
+
